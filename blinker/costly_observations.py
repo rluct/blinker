@@ -27,6 +27,7 @@ class CostlyObservations(gym.Wrapper):
         self.did_observe = False
         self.curr_observation = None
         self.staleness = 0
+        self._glyph = None
 
     def step(self, action):
         assert isinstance(action, (list, tuple)), \
@@ -51,3 +52,34 @@ class CostlyObservations(gym.Wrapper):
         self.curr_observation = self.env.reset(**kwargs)
         self.staleness = 0
         return self._obs()
+
+    def render(self, mode='human', **kwargs):
+        if mode == 'human':
+            self._render_glyph()
+        return self.env.render(mode, **kwargs)
+
+    def _render_glyph(self):
+        if self._glyph:
+            self._color_glyph()
+            return
+
+        # find the inner viewer
+        env = self.env
+        while hasattr(env, 'env'):
+            env = env.env
+        if not hasattr(env, 'viewer'):
+            return
+        viewer = env.viewer
+
+        # create the glyph
+        from gym.envs.classic_control import rendering
+        self._glyph = rendering.make_circle(15, 20, filled=True)
+        pos = (viewer.width - 20, viewer.height - 20)
+        trans = rendering.Transform(translation=pos)
+        self._glyph.add_attr(trans)
+        self._color_glyph()
+        viewer.add_geom(self._glyph)
+
+    def _color_glyph(self):
+        v = 1. if self.staleness > 0 else 0.
+        self._glyph.set_color(1., v, v)
