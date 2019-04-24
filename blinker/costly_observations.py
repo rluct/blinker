@@ -29,7 +29,8 @@ class CostlyObservations(gym.Wrapper):
         self.staleness = 0
 
     def step(self, action):
-        assert isinstance(action, tuple), "action should be a tuple of (base_action, should_observe)"
+        assert isinstance(action, (list, tuple)), \
+            "action should be a tuple of (base_action, should_observe), instead it was %s" % action
         action, should_observe = action
         observation, reward, done, info = self.env.step(action)
         if should_observe:
