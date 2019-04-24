@@ -4,7 +4,13 @@ import gym
 from gym.spaces import Tuple, Discrete, Box
 
 class CostlyObservations(gym.Wrapper):
-    def __init__(self, env, observation_cost=1, include_staleness=False):
+    def __init__(self, env=None, observation_cost=1, include_staleness=False):
+        
+        if isinstance(env, str):
+            env = gym.make(env)
+
+        assert isinstance(env, gym.Env), "env is not a Gym, was %s instead" % env
+
         super().__init__(env)
         
         # wrap the action space to represent the 'do i observe?' head
