@@ -46,7 +46,7 @@ class CostlyObservations(gym.Wrapper):
 
     def _obs(self):
         if self.include_staleness:
-            return (self.curr_observation, self.staleness)
+            return (self.curr_observation, np.array([self.staleness], dtype='float64'))
         else:
             return self.curr_observation
 
