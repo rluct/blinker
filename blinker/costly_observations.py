@@ -27,6 +27,7 @@ class CostlyObservations(gym.Wrapper):
         self.did_observe = False
         self.curr_observation = None
         self.staleness = 0
+        self.last_action = 0
         self._glyph = None
 
     def step(self, action):
@@ -40,6 +41,7 @@ class CostlyObservations(gym.Wrapper):
             reward -= self.observation_cost
         else:
             self.staleness += 1
+        self.last_action = action
         return self._obs(), reward, done, info
 
     def _obs(self):
@@ -59,8 +61,8 @@ class CostlyObservations(gym.Wrapper):
         return self.env.render(mode, **kwargs)
 
     def _render_glyph(self):
-        if self._glyph:
-            self._color_glyph()
+        if hasattr(self, 'observation_glyph'):
+            self._update_glyphs()
             return
 
         # find the inner viewer
@@ -70,16 +72,29 @@ class CostlyObservations(gym.Wrapper):
         if not hasattr(env, 'viewer'):
             return
         viewer = env.viewer
+        if not viewer:
+            return
 
         # create the glyph
-        from gym.envs.classic_control import rendering
-        self._glyph = rendering.make_circle(15, 20, filled=True)
-        pos = (viewer.width - 20, viewer.height - 20)
-        trans = rendering.Transform(translation=pos)
-        self._glyph.add_attr(trans)
-        self._color_glyph()
-        viewer.add_geom(self._glyph)
+        self.observation_glyph = make_glyph(viewer, -20)
+        self.action_glyphs = [make_glyph(viewer, 20 + 25 * i) for i in range(2)]
 
-    def _color_glyph(self):
-        v = 1. if self.staleness > 0 else 0.
-        self._glyph.set_color(1., v, v)
+    def _update_glyphs(self):
+        self.observation_glyph(self.staleness == 0)
+        for i, glyph in enumerate(self.action_glyphs):
+            glyph(self.last_action == i)
+
+def make_glyph(viewer, x_pos):
+    from gym.envs.classic_control import rendering
+    glyph = rendering.make_circle(10, 15, filled=True)
+    if x_pos < 0: 
+        x_pos += viewer.width
+    trans = rendering.Transform(translation=(x_pos, viewer.height - 20))
+    glyph.add_attr(trans)
+    viewer.add_geom(glyph)
+    def show(should_show):
+        if should_show:
+            glyph.set_color(0, 0, 0)
+        else:
+            glyph.set_color(1, 1, 1)
+    return show
