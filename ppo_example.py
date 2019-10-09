@@ -7,8 +7,8 @@ from ray.rllib.agents.ppo import PPOAgent, DEFAULT_CONFIG
 from ray.tune.registry import register_env
 
 # redis_address = None
-redis_address = "localhost:6379" 
-ray.init(ignore_reinit_error=True, redis_address=redis_address)
+# redis_address = "localhost:6379" 
+ray.init(ignore_reinit_error=True)
 
 def make_costly_env(env_config):
     return blinker.CostlyObservations(**env_config)
@@ -24,7 +24,7 @@ config['sgd_minibatch_size'] = 64
 # config['model']['fcnet_hiddens'] = [64, 64]
 config['model']['use_lstm'] = True
 config['model']['lstm_cell_size'] = 32
-config['model']['fcnet_hiddens'] = [64]
+config['model']['fcnet_hiddens'] = [5]
 config['num_cpus_per_worker'] = 0
 
 config['env'] = "CostlyObservations"
